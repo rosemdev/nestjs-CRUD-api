@@ -4,7 +4,7 @@ import { GetTasksFilterDto } from './dto/get-tasks-filter.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository, Like } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 @Injectable()
 export class TaskRepository extends Repository<Task> {
@@ -23,26 +23,26 @@ export class TaskRepository extends Repository<Task> {
     return this.save(task);
   }
 
-  getTasksWithFilters(filterDto: GetTasksFilterDto): Promise<Task[]> {
-    const { status, search } = filterDto;
-    let tasks;
+  async getTasks(filterDto: GetTasksFilterDto): Promise<Task[]> {
+    let search = filterDto.search;
+    const status = filterDto.status;
+
+    const query = this.createQueryBuilder('task');
 
     if (status) {
-      tasks = this.find({
-        where: {
-          status,
-        },
-      });
+      query.andWhere('task.status = :status', { status });
     }
 
     if (search) {
-      tasks = this.find({
-        where: [
-          { title: Like(`%${search}%`) },
-          { description: Like(`%${search}%`) },
-        ],
-      });
+      search = search.toLocaleLowerCase();
+
+      query.andWhere(
+        'task.title LIKE :search OR task.description LIKE :search',
+        { search: `%${search}%` },
+      );
     }
+
+    const tasks = await query.getMany();
 
     return tasks;
   }
