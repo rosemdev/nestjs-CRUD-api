@@ -9,4 +9,10 @@ export class AuthService {
   async signUp(authDto: AuthCredentialsDto): Promise<void> {
     return this.usersRepository.createUser(authDto);
   }
+
+  async signIn(
+    authDto: AuthCredentialsDto,
+  ): Promise<{ token: string; username: string }> {
+    return this.usersRepository.signIn(authDto);
+  }
 }
